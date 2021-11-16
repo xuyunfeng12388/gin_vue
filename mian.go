@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "github.com/xuyunfeng12388/gin_vue/router"
 
 func main(){
-	fmt.Println("xuyunfeng-gin-vue")
+	router.Run()
 }
