@@ -1,0 +1,8 @@
+server:
+  port: ":8080"
+db:
+  hostname: 192.168.1.102
+  port: 3306
+  username: root
+  password: 123456
+  dbname: gin_vue
