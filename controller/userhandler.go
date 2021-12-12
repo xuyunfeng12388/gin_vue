@@ -14,66 +14,42 @@ import (
 func Login(ctx *gin.Context){
 	phone := ctx.PostForm("phone")
 	password := ctx.PostForm("password")
-
-	if phone == "" && password == "" { // Data verification
-		ctx.JSON(http.StatusUnprocessableEntity, gin.H{
-			"code":422,
-			"msg": "the phone and password not null!",
-		})
+	if phone == "" || password == "" { // Data verification
+		utils.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "the phone and password not null!")
 		return
 	}
 
 	if len(phone) != 11{ // Data verification
-		ctx.JSON(http.StatusUnprocessableEntity, gin.H{
-			"code":422,
-			"msg": "the phone num must be 11 digits!",
-		})
+		utils.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "the phone num must be 11 digits!")
 		return
 	}
 
 	if len(password) < 6 { // verification password
-		ctx.JSON(http.StatusUnprocessableEntity, gin.H{
-			"code":422,
-			"msg": "Password cannot be less than 6 digits!",
-		})
+		utils.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "Password cannot be less than 6 digits!")
 		return
 	}
 
 	user, flag := dao.IsPhoneExist(phone)
 	if !flag {
-		ctx.JSON(400, gin.H{
-			"code":400,
-			"msg": "user not exist, please Register!",
-		})
+		utils.Fail(ctx, nil, "user not exist, please Register!")
 		return
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil{
-		ctx.JSON(400, gin.H{
-			"code":400,
-			"msg": "password err!",
-		})
+		utils.Fail(ctx, nil, "password err!")
 		return
 	}
 	// 生成token
 	token, err := common.ReleaseToken(*user)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code":http.StatusInternalServerError,
-			"msg": "Server Err",
-		})
+		utils.Response(ctx, http.StatusInternalServerError, 500, nil, "Server Err!")
 		log.Printf("token generate error :%v", err)
 		return
 	}
 	userinfo:= dao.UserInfo{
-		User  : user,
+		User  : dao.ToUserDto(user),
 		Token : token,
 	}
-	ctx.JSON(200, gin.H{
-		"code":200,
-		"msg": "Login success",
-		"data": userinfo,
-	})
-
+	utils.Succes(ctx, gin.H{"userinfo": userinfo}, "Login success!")
 }
 
 func Register(ctx *gin.Context){
@@ -82,27 +58,18 @@ func Register(ctx *gin.Context){
 	password := ctx.PostForm("password")
 	phone := ctx.PostForm("phone")
 
-	if phone == "" && password == "" { // Data verification
-		ctx.JSON(http.StatusUnprocessableEntity, gin.H{
-			"code":422,
-			"msg": "the phone and password not null!",
-		})
+	if phone == "" || password == "" { // Data verification
+		utils.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "the phone and password not null!")
 		return
 	}
 
 	if len(phone) != 11{ // Data verification
-		ctx.JSON(http.StatusUnprocessableEntity, gin.H{
-			"code":422,
-			"msg": "the phone num must be 11 digits!",
-		})
+		utils.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "the phone num must be 11 digits!")
 		return
 	}
 
 	if len(password) < 6 { // verification password
-		ctx.JSON(http.StatusUnprocessableEntity, gin.H{
-			"code":422,
-			"msg": "Password cannot be less than 6 digits!",
-		})
+		utils.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "Password cannot be less than 6 digits!")
 		return
 	}
 
@@ -111,44 +78,26 @@ func Register(ctx *gin.Context){
 		fmt.Println(name)
 	}
 	log.Println(name, password, phone)
-
 	if _, flag := dao.IsPhoneExist(phone); flag{
-		ctx.JSON(400, gin.H{
-			"msg": "Iphone exist!",
-		})
+		utils.Response(ctx, http.StatusBadRequest, 400, nil, "User exist!")
 		return
 	}
 	// Create user
 	dao.Resiter(name, password, phone)
 	// return result
-	//ctx.JSON(utils.NewSucc("Register success!", gin.H{
-	//	"msg": "Register success",
-	//}))
-	ctx.JSON(200, gin.H{
-		"msg": "Register success",
-	})
+	utils.Succes(ctx, nil, "Register success!")
 }
 
 func UserInfo(ctx *gin.Context) {
 	phone := ctx.Query("phone")
 	if len(phone) != 11{ // Data verification
-		ctx.JSON(http.StatusUnprocessableEntity, gin.H{
-			"code":422,
-			"msg": "the phone num must be 11 digits!",
-		})
+		utils.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "the phone num must be 11 digits!")
 		return
 	}
 	user, err := dao.GetUserByPhone(phone)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code":400,
-			"msg": fmt.Sprintf("phone %s not exiest!", phone),
-		})
+		utils.Fail(ctx, nil, fmt.Sprintf("user %s not exiest!", phone))
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"code":200,
-		"msg": "success",
-		"data": user,
-	})
+	utils.Succes(ctx, gin.H{"userinfo": dao.ToUserDto(user)}, "Login success!")
 }

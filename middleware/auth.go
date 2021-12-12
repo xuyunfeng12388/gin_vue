@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/xuyunfeng12388/gin_vue/common"
 	"github.com/xuyunfeng12388/gin_vue/dao"
+	"github.com/xuyunfeng12388/gin_vue/utils"
 	"net/http"
 	"strings"
 )
@@ -13,20 +14,14 @@ func AuthMiddleware() gin.HandlerFunc {
 		// 获取authorization
 		tokenString := ctx.GetHeader("Authorization")
 		if tokenString == "" || !strings.HasPrefix(tokenString, "Bearer"){
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"code":http.StatusUnauthorized,
-				"mes": "权限不够",
-			})
+			utils.Response(ctx, http.StatusUnauthorized, 401, nil, "Unauthorized!")
 			ctx.Abort()
 			return
 		}
 		tokenString = tokenString[7:]
 		token, claims, err := common.ParseToken(tokenString)
 		if err != nil || !token.Valid {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"code":http.StatusUnauthorized,
-				"mes": "权限不够2",
-			})
+			utils.Response(ctx, http.StatusUnauthorized, 401, nil, "Unauthorized!")
 			ctx.Abort()
 			return
 		}
@@ -34,10 +29,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		userId := claims.UserId
 		user, err := dao.GetUserByUser(userId)
 		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"code":http.StatusUnauthorized,
-				"mes": "权限不够3",
-			})
+			utils.Response(ctx, http.StatusUnauthorized, 401, nil, "Unauthorized!")
 			ctx.Abort()
 			return
 		}

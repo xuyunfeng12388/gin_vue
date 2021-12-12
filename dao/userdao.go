@@ -6,11 +6,24 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserInfo struct {
-	User *model.User
-	Token string
+type UserDto struct {
+	Id uint `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+	Phone string `json:"phone,omitempty"`
 }
 
+type UserInfo struct {
+	User UserDto `json:"user,omitempty"`
+	Token string `json:"token,omitempty"`
+}
+
+func ToUserDto(user *model.User) UserDto {
+	return UserDto{
+		Id:	   user.ID,
+		Name:  user.Name,
+		Phone: user.Phone,
+	}
+}
 func Resiter(name, password, phone string){
 	hashPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	user := model.NewUser(name, string(hashPassword), phone)
@@ -19,7 +32,7 @@ func Resiter(name, password, phone string){
 
 func GetUserByPhone(phone string) (*model.User, error){
 	var user model.User
-	if err := db.DB.Select([]string{"id","name", "phone"}).Where("phone=?", phone).First(&user).Error; err != nil{
+	if err := db.DB.Select([]string{"id", "name", "phone", "created_at", "updated_at"}).Where("phone=?", phone).First(&user).Error; err != nil{
 		return nil, err
 	}
 	return &user, nil
@@ -27,7 +40,7 @@ func GetUserByPhone(phone string) (*model.User, error){
 
 func GetUserByUser(UserId uint) (*model.User, error){
 	var user model.User
-	if err := db.DB.Select([]string{"id","name", "phone"}).Where("ID=?", UserId).First(&user).Error; err != nil{
+	if err := db.DB.Select([]string{"id","name", "phone", "created_at", "updated_at"}).Where("ID=?", UserId).First(&user).Error; err != nil{
 		return nil, err
 	}
 	return &user, nil
